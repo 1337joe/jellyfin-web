@@ -40,25 +40,35 @@ const LiveTVSearchResults: FunctionComponent<LiveTVSearchResultsProps> = ({ serv
 
     useEffect(() => {
         const getDefaultParameters = () => ({
-            ParentId: parentId,
             searchTerm: query,
-            Limit: 24,
-            Fields: 'PrimaryImageAspectRatio,CanDelete,BasicSyncInfo,MediaSourceCount',
-            Recursive: true,
+            HasAired: false,
+            limit: 24,
             EnableTotalRecordCount: false,
-            ImageTypeLimit: 1,
-            IncludePeople: false,
-            IncludeMedia: false,
-            IncludeGenres: false,
-            IncludeStudios: false,
-            IncludeArtists: false
+            Fields: 'ChannelInfo,PrimaryImageAspectRatio',
+            EnableImageTypes: 'Primary,Thumb'
         });
 
-        // FIXME: This query does not support Live TV filters
+        const fetchPrograms = (apiClient: ApiClient, params = {}) => apiClient?.getLiveTvPrograms(
+            {
+                userId: apiClient?.getCurrentUserId(),
+                ...getDefaultParameters(),
+                ...params
+            }
+        );
         const fetchItems = (apiClient: ApiClient, params = {}) => apiClient?.getItems(
             apiClient?.getCurrentUserId(),
             {
-                ...getDefaultParameters(),
+                ParentId: parentId,
+                searchTerm: query,
+                Limit: 24,
+                Fields: 'PrimaryImageAspectRatio,CanDelete,BasicSyncInfo,MediaSourceCount',
+                Recursive: true,
+                EnableTotalRecordCount: false,
+                ImageTypeLimit: 1,
+                IncludePeople: false,
+                IncludeGenres: false,
+                IncludeStudios: false,
+                IncludeArtists: false,
                 IncludeMedia: true,
                 ...params
             }
@@ -77,59 +87,23 @@ const LiveTVSearchResults: FunctionComponent<LiveTVSearchResultsProps> = ({ serv
             const apiClient = ServerConnections.getApiClient(serverId);
 
             // Movies row
-            fetchItems(apiClient, {
-                IncludeItemTypes: 'LiveTvProgram',
-                IsMovie: true,
-                IsSeries: false,
-                IsSports: false,
-                IsKids: false,
-                IsNews: false
-            }).then(result => setMovies(result.Items || []));
+            fetchPrograms(apiClient, { IsMovie: true })
+                .then(result => setMovies(result.Items || []));
             // Episodes row
-            fetchItems(apiClient, {
-                IncludeItemTypes: 'LiveTvProgram',
-                IsMovie: false,
-                IsSeries: true,
-                IsSports: false,
-                IsKids: false,
-                IsNews: false
-            }).then(result => setEpisodes(result.Items || []));
+            fetchPrograms(apiClient, { IsSeries: true })
+                .then(result => setEpisodes(result.Items || []));
             // Sports row
-            fetchItems(apiClient, {
-                IncludeItemTypes: 'LiveTvProgram',
-                IsMovie: false,
-                IsSeries: false,
-                IsSports: true,
-                IsKids: false,
-                IsNews: false
-            }).then(result => setSports(result.Items || []));
+            fetchPrograms(apiClient, { IsSports: true })
+                .then(result => setSports(result.Items || []));
             // Kids row
-            fetchItems(apiClient, {
-                IncludeItemTypes: 'LiveTvProgram',
-                IsMovie: false,
-                IsSeries: false,
-                IsSports: false,
-                IsKids: true,
-                IsNews: false
-            }).then(result => setKids(result.Items || []));
+            fetchPrograms(apiClient, { IsKids: true })
+                .then(result => setKids(result.Items || []));
             // News row
-            fetchItems(apiClient, {
-                IncludeItemTypes: 'LiveTvProgram',
-                IsMovie: false,
-                IsSeries: false,
-                IsSports: false,
-                IsKids: false,
-                IsNews: true
-            }).then(result => setNews(result.Items || []));
+            fetchPrograms(apiClient, { IsNews: true })
+                .then(result => setNews(result.Items || []));
             // Programs row
-            fetchItems(apiClient, {
-                IncludeItemTypes: 'LiveTvProgram',
-                IsMovie: false,
-                IsSeries: false,
-                IsSports: false,
-                IsKids: false,
-                IsNews: false
-            }).then(result => setPrograms(result.Items || []));
+            fetchPrograms(apiClient, {})
+                .then(result => setPrograms(result.Items || []));
             // Channels row
             fetchItems(apiClient, { IncludeItemTypes: 'TvChannel' })
                 .then(result => setChannels(result.Items || []));
